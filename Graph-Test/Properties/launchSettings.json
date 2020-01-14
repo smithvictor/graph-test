@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Graph-Test": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\hola_\\Desktop\\test.json"
+    }
+  }
+}
