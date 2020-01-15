@@ -46,10 +46,24 @@ namespace Graph_Test
                 return;
             }
             ProcessArray(json);
-            Console.WriteLine(JsonConvert.SerializeObject(resultJSON, Formatting.Indented));
+            string result = JsonConvert.SerializeObject(resultJSON, Formatting.Indented);
+            if (args.Length == 2)
+            {
+                File.WriteAllText(args[1],result);
+                Console.WriteLine($"File successfully saved at {args[1]}");
+            }
+            else
+            {
+                Console.WriteLine(result);
+            }
+            Console.WriteLine("\n\n\nPress a key to close the program...");
             Console.ReadLine();
         }
-
+        /// <summary>
+        /// Iterates over a JObject array as a JArray and sends them to another process with the provided JObject parameter
+        /// </summary>
+        /// <param name="array">JArray used for iteration</param>
+        /// <param name="parent">JObject to be passed as a parameter for each element</param>
         static void ProcessArray(JArray array, JObject parent = null)
         {
             foreach (JObject o in array)
@@ -57,7 +71,11 @@ namespace Graph_Test
                 ProcessObject(o, parent);
             }
         }
-
+        /// <summary>
+        /// Iterates over the properties of a JObject to be flatten later 
+        /// </summary>
+        /// <param name="obj">JObject to be flattened</param>
+        /// <param name="parent">JObject that has a parent child relationship to the current element</param>
         static void ProcessObject(JObject obj, JObject parent = null)
         {
             if (obj.Type == JTokenType.Object)
@@ -70,11 +88,17 @@ namespace Graph_Test
                     var value = p.Value;
                     if (value.Type == JTokenType.Array)
                     {
+                        //In case of an array of nested objects the current element or Object would be considered the parent of the array elements
                         relationships = (JArray)value;
                     }
                     else if (value.Type == JTokenType.Object)
                     {
+                        //If the property contains an Object as a value it would be considered as its father if it is identified as an entity, otherwise added as a attribute or property
                         son = (JObject)value;
+                        if (son.Property(Rules.Rules.ENTITY_PROPERTY) == null)
+                        {
+                            newValue.Add(p.Name, value);
+                        }
                     }
                     else
                     {
@@ -88,10 +112,12 @@ namespace Graph_Test
                 if (son != null && son.Property(Rules.Rules.ENTITY_PROPERTY) != null)
                 {
                     ProcessObject(son, null);
+                    //The notation for id relationships would be {parentEntityName}{capitalizedId}
                     newValue.Add($"{son[Rules.Rules.ENTITY_PROPERTY].Value<string>().ToLower()}{ToTitleCase(Rules.Rules.UNIQUE_PROPERTY)}", son.Property(Rules.Rules.UNIQUE_PROPERTY).Value);
                 }
                 if (parent != null)
                 {
+                    //The notation for id relationships would be {parentEntityName}{capitalizedId}
                     string relationshipId = $"{parent[Rules.Rules.ENTITY_PROPERTY].Value<string>().ToLower()}{ToTitleCase(Rules.Rules.UNIQUE_PROPERTY)}";
                     if (newValue.Property(relationshipId) == null)
                     {
@@ -105,11 +131,15 @@ namespace Graph_Test
                 {
                     resultJSON.Add(entity, entityGroup);
                 }
-                VerifyAndAddValue(newValue, entityGroup, entity);
+                VerifyAndAddValue(newValue, entityGroup);
             }
         }
-
-        static void VerifyAndAddValue(JObject obj, JArray group, string entity)
+        /// <summary>
+        /// Searches the global json object for a match using the JObject provided, if the object is not on the entity group it is added, otherwise ignored
+        /// </summary>
+        /// <param name="obj">Object used as search parameter</param>
+        /// <param name="group">Group of entities to search and add</param>
+        static void VerifyAndAddValue(JObject obj, JArray group)
         {
             if (group.Count == 0)
             {
@@ -123,7 +153,11 @@ namespace Graph_Test
                 group.Add(obj);
             }
         }
-
+        /// <summary>
+        /// Converts the string to a capitalized form based on the OS culture information and returns it on a new string object
+        /// </summary>
+        /// <param name="title">String to be capitalized</param>
+        /// <returns></returns>
         static string ToTitleCase(string title)
         {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(title.ToLower());

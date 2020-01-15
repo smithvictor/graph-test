@@ -2,7 +2,7 @@
   "profiles": {
     "Graph-Test": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Users\\hola_\\Desktop\\test.json"
+      "commandLineArgs": "C:\\Users\\hola_\\Desktop\\test.json C:\\Users\\hola_\\Desktop\\out.json"
     }
   }
 }
